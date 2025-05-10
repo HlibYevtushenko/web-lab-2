@@ -1,24 +1,36 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as fs from 'fs';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  // Зчитуємо сертифікат та ключ
   const httpsOptions = {
-    key: fs.readFileSync('C:\\Storage\\Code\\KPI\\Web\\localhost-key.pem'),
-    cert: fs.readFileSync('C:\\Storage\\Code\\KPI\\Web\\localhost.pem'),
-    minVersion: 'TLSv1.2', // Встановлюємо мінімальну версію TLS на 1.2
-    maxVersion: 'TLSv1.2', // Встановлюємо максимальну версію TLS на 1.2
-    ciphers: 'RSA',
-    honorCipherOrder: true, // Забезпечує використання вказаних шифрів у заданому порядку
+    key: fs.readFileSync(
+      'C:\\Storage\\Code\\KPI\\Web\\my-nest-app\\casdoor\\keys\\localhost-key.pem',
+    ),
+    cert: fs.readFileSync(
+      'C:\\Storage\\Code\\KPI\\Web\\my-nest-app\\casdoor\\keys\\localhost.pem',
+    ),
+    minVersion: 'TLSv1.2',
+    maxVersion: 'TLSv1.2',
+    ciphers: [
+      'TLS_RSA_WITH_AES_256_CBC_SHA256',
+      'TLS_RSA_WITH_AES_256_CBC_SHA',
+    ].join(':'),
+    honorCipherOrder: true,
   };
 
-  // Створюємо NestJS додаток з HTTPS
   const app = await NestFactory.create(AppModule, {
     httpsOptions,
   });
 
-  // Слухаємо на порту 3000
+  app.enableCors({
+    origin: 'https://localhost:3001',
+    credentials: true,
+  });
+
+  app.use(cookieParser());
+
   await app.listen(3000);
 }
 
